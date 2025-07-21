@@ -1,0 +1,262 @@
+import os
+import certifi
+os.environ['SSL_CERT_FILE'] = certifi.where()
+import time
+import random
+import logging
+import pyautogui
+import traceback
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException
+
+
+# --- Configuration des logs ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
+# --- Générer un User-Agent aléatoire ---
+
+def random_user_agent():
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+    ]
+    ua = random.choice(user_agents)
+    logging.info(f"User-Agent utilisé : {ua}")
+    return ua
+
+# --- Options pour uc.Chrome ---
+
+options = uc.ChromeOptions()
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-blink-features=AutomationControlled")
+options.add_argument("--disable-extensions")
+options.add_argument("--disable-gpu")
+options.add_argument("--window-size=1920,1080")
+options.add_argument("--window-position=0,0")
+options.add_argument(f"--user-agent={random_user_agent()}")
+options.add_argument("--disable-notifications")
+options.add_argument("--disable-popup-blocking")
+options.add_argument("--start-maximized")
+
+
+########################## - RECHERCHER - ##########################
+
+
+def rechercher(driver, query):
+    try:
+        logging.info("Début de la fonction 'rechercher'")
+        search_box = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "q"))
+        )
+        logging.info("Boîte de recherche trouvée")
+
+        window_position = driver.get_window_position()
+        window_x, window_y = window_position["x"], window_position["y"]
+
+        location = search_box.location
+        size = search_box.size
+        center_x = location["x"] + size["width"] / 2
+        center_y = location["y"] + size["height"] / 2
+
+        offset_y = 80
+        screen_x = int(window_x + center_x)
+        screen_y = int(window_y + center_y + offset_y)
+
+        logging.debug(f"Position curseur (x={screen_x}, y={screen_y})")
+        pyautogui.moveTo(screen_x, screen_y, duration=random.uniform(0.4, 0.8))
+        pyautogui.click()
+        time.sleep(0.5)
+
+        logging.info(f"Saisie de la requête : {query}")
+        for char in query:
+            pyautogui.write(char)
+            time.sleep(random.uniform(0.05, 0.2))
+
+        pyautogui.press('enter')
+        logging.info(f"Requête '{query}' envoyée")
+
+    except Exception as e:
+        logging.error(f"Erreur dans la fonction de recherche : {e}")
+        logging.debug(traceback.format_exc())
+
+
+########################## - CLIC LIEN - ##########################
+
+
+def cliquer_element_pyautogui(driver, element):
+    # Vérifie si l'élément est visible dans le viewport, sinon scroll vers lui
+    rect = driver.execute_script("return arguments[0].getBoundingClientRect();", element)
+    viewport_height = driver.execute_script("return window.innerHeight")
+
+    element_top = rect['top']
+    element_bottom = rect['top'] + rect['height']
+
+    if element_bottom < 0 or element_top > viewport_height:
+        logging.info("L'élément est complètement en dehors du viewport, scroll nécessaire.")
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element)
+        time.sleep(random.uniform(0.5, 1.0))
+    elif element_top < 0.1 * viewport_height or element_bottom > 0.9 * viewport_height:
+        logging.info("L'élément est partiellement visible, recentrage recommandé.")
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element)
+        time.sleep(random.uniform(0.5, 1.0))
+    else:
+        logging.info("L'élément est déjà visible dans le viewport.")
+
+    # Obtenir la position absolue de l'élément à l'écran
+    rect = driver.execute_script("return arguments[0].getBoundingClientRect();", element)
+    x = rect['left'] + rect['width'] / 2
+    y = rect['top'] + rect['height'] / 2
+
+
+    # Simuler un déplacement progressif de la souris vers le centre de l'élément
+    current_x, current_y = pyautogui.position()
+    steps = random.randint(10, 20)
+    for i in range(steps):
+        intermediate_x = current_x + (x - current_x) * (i + 1) / steps
+        intermediate_y = current_y + (y - current_y) * (i + 1) / steps
+        pyautogui.moveTo(intermediate_x, intermediate_y, duration=random.uniform(0.01, 0.03))
+    time.sleep(random.uniform(0.1, 0.3))
+
+    # Clic final sur l'élément
+    pyautogui.click()
+    logging.info("Clic simulé sur l'élément avec PyAutoGUI")
+
+
+########################## - SCROLL - ##########################
+
+
+def scroll_pyautogui():
+    scroll_amount = -random.randint(300, 800)
+    logging.info(f"Scroll vers le bas de {abs(scroll_amount)} pixels")
+    pyautogui.scroll(scroll_amount)
+    time.sleep(random.uniform(0.6, 1.2))
+    logging.info("Scroll simulé avec pyautogui")
+    time.sleep(random.uniform(0.2, 0.4))
+
+
+########################## - MAIN - ##########################
+
+
+def main():
+    try:
+        logging.info("Démarrage du script principal")
+        driver = uc.Chrome(options=options)
+        logging.info("Driver UC Chrome lancé")
+
+        driver.get("https://www.google.com")
+        logging.info("Google ouvert")
+        time.sleep(random.uniform(0.5, 1.5))
+
+        try:
+            logging.info("Recherche du bouton 'Accepter les cookies'")
+            accept_cookies_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="L2AGLb"]'))
+            )
+
+            logging.info("Bouton cookies détecté")
+            driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", accept_cookies_button)
+            time.sleep(1)
+
+            location = accept_cookies_button.location_once_scrolled_into_view
+            size = accept_cookies_button.size
+            center_x = location['x'] + size['width'] / 2
+            center_y = location['y'] + size['height'] / 2
+
+            window_pos = driver.get_window_position()
+            screen_x = int(window_pos['x'] + center_x)
+            screen_y = int(window_pos['y'] + center_y + 80)
+
+            pyautogui.moveTo(screen_x, screen_y, duration=0.5)
+            time.sleep(0.3)
+            pyautogui.click()
+            time.sleep(random.uniform(0.5, 1.5))
+
+            logging.info("Cookies acceptés")
+        except TimeoutException as e:
+            logging.warning("Popup cookies non trouvée (Timeout)")
+        except Exception as e:
+            logging.error(f"Erreur en acceptant les cookies : {e}")
+            logging.debug(traceback.format_exc())
+
+        rechercher(driver, "KEYWORD")
+        target_url = "https://TARGETURL"
+        found = False
+
+        while not found:
+            attempts = 0
+            while not found and attempts < 7:
+                try:
+                    logging.info(f"Tentative {attempts + 1} de recherche du lien")
+                    time.sleep(random.uniform(0.4, 0.8))
+                    results = driver.find_elements(By.XPATH, '//a[starts-with(@href, "http")]')
+                    logging.debug(f"{len(results)} liens trouvés sur la page")
+                    #clicked = False
+                    for result in results:
+                        href = result.get_attribute("href")
+                        if href and target_url in href:
+                            logging.info(f"URL cible trouvée : {href}")
+                            clicked = cliquer_element_pyautogui(driver, result)
+                            if clicked:
+                                logging.info("Lien cliqué avec succès")
+                                found = True
+                                break
+                    if not clicked:
+                        logging.info("Lien non cliqué, tentative de scroll")
+                        scroll_pyautogui()
+                        attempts += 1
+
+                except StaleElementReferenceException:
+                    logging.warning("StaleElementReferenceException : éléments non valides, nouvelle tentative")
+                except Exception as e:
+                    logging.error(f"Erreur pendant la recherche des résultats : {e}")
+                    logging.debug(traceback.format_exc())
+                    break
+
+            if not found:
+                try:
+                    logging.info("Recherche du bouton 'Suivant'")
+                    next_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Suivant") or contains(text(), "Next")]'))
+                    )
+                    logging.info("Bouton 'Suivant' trouvé")
+                    location = next_button.location_once_scrolled_into_view
+                    size = next_button.size
+                    center_x = location['x'] + size['width'] / 2
+                    center_y = location['y'] + size['height'] / 2
+
+                    window_pos = driver.get_window_position()
+                    screen_x = int(window_pos['x'] + center_x)
+                    screen_y = int(window_pos['y'] + center_y + 80)
+
+                    logging.debug(f"Coordonnées clic : x={screen_x}, y={screen_y}")
+                    pyautogui.moveTo(screen_x, screen_y, duration=random.uniform(0.4, 0.8))
+                    time.sleep(random.uniform(0.2, 0.4))
+                    pyautogui.click()
+                    time.sleep(random.uniform(1.5, 2.5))
+                    attempts = 0
+                except Exception as e:
+                    logging.warning(f"Plus de page suivante ou erreur : {e}")
+                    logging.debug(traceback.format_exc())
+                    break
+
+    except Exception as e:
+        logging.error(f"Erreur critique : {e}")
+        logging.debug(traceback.format_exc())
+    finally:
+        logging.info("Fermeture du navigateur")
+        driver.quit()
+        logging.info("Script terminé proprement")
+
+if __name__ == "__main__":
+    main()
