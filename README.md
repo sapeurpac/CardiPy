@@ -28,7 +28,7 @@
 
 Le projet est divisé en trois grandes parties :
 
-- [🔁 Automatisation](#-[automatisation](https://github.com/sapeurpac/CardiPy/blob/main/automation))
+- [🔁 Automatisation](#-https://github.com/sapeurpac/CardiPy/blob/main/automation)
 - [🧠 Reconnaissance sur image](#-reconnaissance-sur-image)
 - [🧮 Prise de décision algorithmique](#-logique-de-décision)
 
