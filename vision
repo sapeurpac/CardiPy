@@ -1,3 +1,11 @@
+Traitement des captures d'écran pour extraire des informations visuelles :
+
+    OCR avec pytesseract
+    Analyse de position via OpenCV
+    Matching d’éléments / détection d'icônes
+
+Projets dexemple / src
+
 https://github.com/dofire/OpenCV-Playing-Card-Detection?utm_source=chatgpt.com
 
 https://github.com/pbmartins/card-recognition
