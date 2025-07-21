@@ -53,7 +53,6 @@ Identifier via XPath, CSS selector ou JS les éléments d’intérêt :
 
 - via driver.execute_script() si nécessaire pour des objets JS
 
-___
     Exemple JS :
 
 ```markdown
