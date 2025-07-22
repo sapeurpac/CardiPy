@@ -46,7 +46,8 @@ CardiPy/
 ├── README.md
 └── .gitignore
 ```
-<img width="3248" height="7644" alt="image" src="https://github.com/user-attachments/assets/c9186219-e365-4fbf-9f0f-15841f646278" />
+
+<img width="792" height="1891" alt="9999999999 drawio" src="https://github.com/user-attachments/assets/1af4e2e0-93b5-4cf6-9ba4-3e47b9501703" />
 
 ---
 
